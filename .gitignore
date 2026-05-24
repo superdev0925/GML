@@ -1,0 +1,42 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+
+# Android Studio / IntelliJ IDEA
+*.iml
+.idea/
+
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local SDK path (machine-specific)
+local.properties
+
+# Signing keys
+*.jks
+*.keystore
+
+# Log / crash / profiling
+*.log
+*.hprof
+
+# Kotlin
+.kotlin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Captures (screenshots from Android Studio)
+captures/
+
+# NDK
+.externalNativeBuild/
+.cxx/
+
+# Misc
+*.swp
+*~
