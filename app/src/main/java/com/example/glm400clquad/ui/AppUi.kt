@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -131,36 +131,7 @@ fun App(vm: MainViewModel) {
                 ) {
                     SectionHeader("Live Measurements", Icons.Default.MonitorHeart)
                     Spacer(Modifier.height(14.dp))
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .defaultMinSize(minHeight = 220.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .heightIn(min = 100.dp),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            LaserCard(panels[0], Modifier.weight(1f).fillMaxHeight())
-                            LaserCard(panels[1], Modifier.weight(1f).fillMaxHeight())
-                        }
-                        Spacer(Modifier.height(14.dp))
-                        Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .heightIn(min = 100.dp),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            LaserCard(panels[2], Modifier.weight(1f).fillMaxHeight())
-                            LaserCard(panels[3], Modifier.weight(1f).fillMaxHeight())
-                        }
-                    }
-
+                    LiveMeasurementsGrid(panels)
                     Spacer(Modifier.height(22.dp))
                     BleLogSection(
                         log = displayLog,
@@ -297,6 +268,39 @@ private fun AppHeader(onScan: () -> Unit, onStop: () -> Unit) {
 }
 
 @Composable
+private fun LiveMeasurementsGrid(panels: List<LaserPanelState>) {
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val gridHeight = (screenHeight * 0.42f).coerceIn(260.dp, 380.dp)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(gridHeight)
+    ) {
+        val rowHeight = (gridHeight - 14.dp) / 2
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(rowHeight),
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            LaserCard(panels[0], Modifier.weight(1f).fillMaxHeight())
+            LaserCard(panels[1], Modifier.weight(1f).fillMaxHeight())
+        }
+        Spacer(Modifier.height(14.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(rowHeight),
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            LaserCard(panels[2], Modifier.weight(1f).fillMaxHeight())
+            LaserCard(panels[3], Modifier.weight(1f).fillMaxHeight())
+        }
+    }
+}
+
+@Composable
 private fun SidebarPanel(content: @Composable () -> Unit) {
     Surface(
         shape = RoundedCornerShape(16.dp),
@@ -361,11 +365,11 @@ private fun LaserCard(panel: LaserPanelState, modifier: Modifier = Modifier) {
     val assignmentLabel = if (panel.address != null) panel.name else "Not assigned"
 
     Surface(
-        modifier = modifier,
+        modifier = modifier.heightIn(min = 110.dp),
         shape = RoundedCornerShape(16.dp),
-        color = AppColors.CardMuted,
-        shadowElevation = 0.dp,
-        border = BorderStroke(1.dp, AppColors.Border.copy(alpha = 0.6f))
+        color = AppColors.Surface,
+        shadowElevation = 2.dp,
+        border = BorderStroke(1.dp, AppColors.Border)
     ) {
         Box(Modifier.fillMaxSize()) {
             Icon(
@@ -452,6 +456,7 @@ private fun LaserCard(panel: LaserPanelState, modifier: Modifier = Modifier) {
 
 @Composable
 private fun BleLogSection(log: String, onClear: () -> Unit) {
+    Column(Modifier.fillMaxWidth()) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Default.Description, null, tint = AppColors.Primary, modifier = Modifier.size(24.dp))
         Spacer(Modifier.width(10.dp))
@@ -489,6 +494,7 @@ private fun BleLogSection(log: String, onClear: () -> Unit) {
             fontSize = 12.sp,
             lineHeight = 18.sp
         )
+    }
     }
 }
 
