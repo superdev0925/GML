@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -176,37 +178,15 @@ fun App(vm: MainViewModel) {
                 Column(
                     modifier = Modifier
                         .weight(0.35f)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                        .fillMaxHeight()
                 ) {
-                    SidebarPanel {
-                        SectionHeader("Assign Device", Icons.Default.Person)
-                        Spacer(Modifier.height(8.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                "Slot:",
-                                fontWeight = FontWeight.Medium,
-                                fontSize = UiScale.Body,
-                                color = AppColors.TextPrimary
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            (1..4).forEach { slot ->
-                                SlotChip(
-                                    slot = slot,
-                                    selected = selectedSlot == slot,
-                                    onClick = { selectedSlot = slot }
-                                )
-                                Spacer(Modifier.width(6.dp))
-                            }
-                        }
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            "Showing GLM400 / GLM400CL only",
-                            fontSize = UiScale.Caption,
-                            color = AppColors.TextSecondary
-                        )
-                    }
-
+                    SectionHeader("Assign Device", Icons.Default.Person)
+                    Spacer(Modifier.height(6.dp))
+                    AssignDevicePanel(
+                        selectedSlot = selectedSlot,
+                        onSlotSelected = { selectedSlot = it }
+                    )
+                    Spacer(Modifier.height(10.dp))
                     NearbyDevicesSection(
                         devices = devices,
                         isScanning = isScanning,
@@ -311,7 +291,10 @@ private fun LiveMeasurementsGrid(
 }
 
 @Composable
-private fun SidebarPanel(content: @Composable () -> Unit) {
+private fun AssignDevicePanel(
+    selectedSlot: Int,
+    onSlotSelected: (Int) -> Unit,
+) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = AppColors.Surface,
@@ -319,7 +302,33 @@ private fun SidebarPanel(content: @Composable () -> Unit) {
         border = BorderStroke(1.dp, AppColors.Border),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(Modifier.padding(UiScale.PadPanel)) { content() }
+        Column(
+            modifier = Modifier.padding(horizontal = UiScale.PadPanel, vertical = 8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Slot:",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = UiScale.Body,
+                    color = AppColors.TextPrimary
+                )
+                Spacer(Modifier.width(8.dp))
+                (1..4).forEach { slot ->
+                    SlotChip(
+                        slot = slot,
+                        selected = selectedSlot == slot,
+                        onClick = { onSlotSelected(slot) }
+                    )
+                    Spacer(Modifier.width(6.dp))
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Showing GLM400 / GLM400CL only",
+                fontSize = UiScale.Caption,
+                color = AppColors.TextSecondary
+            )
+        }
     }
 }
 
@@ -538,11 +547,16 @@ private fun NearbyDevicesSection(
     ) {
         NearbyDevicesHeader(isScanning = isScanning)
         Spacer(Modifier.height(6.dp))
-        if (devices.isEmpty()) {
-            DefaultNearbyDeviceCard()
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                devices.forEach { device ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (devices.isEmpty()) {
+                item(key = "default_device") {
+                    DefaultNearbyDeviceCard()
+                }
+            } else {
+                items(devices, key = { it.address }) { device ->
                     DeviceCard(device) { onConnect(device) }
                 }
             }
