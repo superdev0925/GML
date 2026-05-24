@@ -4,6 +4,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 object AppColors {
     val Background = Color(0xFFF5F6FA)
@@ -21,6 +23,36 @@ object AppColors {
     val StatusGreen = Color(0xFF43A047)
     val StatusOrange = Color(0xFFF57C00)
     val LogGreen = Color(0xFF2E7D32)
+}
+
+/** Compact typography and spacing tuned for tablet landscape (single-screen fit). */
+object UiScale {
+    val AppTitle = 17.sp
+    val SectionTitle = 13.sp
+    val CardTitle = 13.sp
+    val Body = 11.sp
+    val BodySmall = 10.sp
+    val Caption = 9.sp
+    val Status = 10.sp
+    val Log = 9.sp
+    val LogLine = 13.sp
+    val Button = 11.sp
+
+    val PadScreenH = 12.dp
+    val PadScreenV = 8.dp
+    val PadCard = 10.dp
+    val PadPanel = 12.dp
+    val GapSection = 8.dp
+    val GapGrid = 10.dp
+    val GridMax = 168.dp
+    val LogMin = 64.dp
+
+    val IconSection = 16.dp
+    val IconHeader = 18.dp
+    val IconSmall = 12.dp
+    val Logo = 30.dp
+    val Slot = 36.dp
+    val BtCircle = 32.dp
 }
 
 @Composable
