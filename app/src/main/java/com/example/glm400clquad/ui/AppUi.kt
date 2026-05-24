@@ -57,8 +57,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.BoxWithConstraints
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -123,7 +123,7 @@ fun App(vm: MainViewModel) {
                     .padding(horizontal = 24.dp, vertical = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                // Left column ~65%
+                // Left column: Live Measurements (top) + Raw BLE Log (bottom, fills remaining space)
                 Column(
                     modifier = Modifier
                         .weight(0.65f)
@@ -131,12 +131,30 @@ fun App(vm: MainViewModel) {
                 ) {
                     SectionHeader("Live Measurements", Icons.Default.MonitorHeart)
                     Spacer(Modifier.height(14.dp))
-                    LiveMeasurementsGrid(panels)
-                    Spacer(Modifier.height(22.dp))
-                    BleLogSection(
-                        log = displayLog,
-                        onClear = { suppressedLog = log }
-                    )
+                    BoxWithConstraints(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        val gridHeight = (maxHeight * 0.52f).coerceIn(200.dp, 260.dp)
+                        Column(Modifier.fillMaxSize()) {
+                            LiveMeasurementsGrid(
+                                panels = panels,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(gridHeight)
+                            )
+                            Spacer(Modifier.height(20.dp))
+                            BleLogSection(
+                                log = displayLog,
+                                onClear = { suppressedLog = log },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .heightIn(min = 120.dp)
+                            )
+                        }
+                    }
                 }
 
                 // Right column ~35%
@@ -268,34 +286,32 @@ private fun AppHeader(onScan: () -> Unit, onStop: () -> Unit) {
 }
 
 @Composable
-private fun LiveMeasurementsGrid(panels: List<LaserPanelState>) {
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val gridHeight = (screenHeight * 0.42f).coerceIn(260.dp, 380.dp)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(gridHeight)
-    ) {
-        val rowHeight = (gridHeight - 14.dp) / 2
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(rowHeight),
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            LaserCard(panels[0], Modifier.weight(1f).fillMaxHeight())
-            LaserCard(panels[1], Modifier.weight(1f).fillMaxHeight())
-        }
-        Spacer(Modifier.height(14.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(rowHeight),
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            LaserCard(panels[2], Modifier.weight(1f).fillMaxHeight())
-            LaserCard(panels[3], Modifier.weight(1f).fillMaxHeight())
+private fun LiveMeasurementsGrid(
+    panels: List<LaserPanelState>,
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(modifier = modifier) {
+        val rowHeight = (maxHeight - 14.dp) / 2
+        Column(Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(rowHeight),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                LaserCard(panels[0], Modifier.weight(1f).fillMaxHeight())
+                LaserCard(panels[1], Modifier.weight(1f).fillMaxHeight())
+            }
+            Spacer(Modifier.height(14.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(rowHeight),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                LaserCard(panels[2], Modifier.weight(1f).fillMaxHeight())
+                LaserCard(panels[3], Modifier.weight(1f).fillMaxHeight())
+            }
         }
     }
 }
@@ -455,46 +471,52 @@ private fun LaserCard(panel: LaserPanelState, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BleLogSection(log: String, onClear: () -> Unit) {
-    Column(Modifier.fillMaxWidth()) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Description, null, tint = AppColors.Primary, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.width(10.dp))
-        Text(
-            "Raw BLE Log",
-            fontWeight = FontWeight.Bold,
-            fontSize = 19.sp,
-            color = AppColors.TextPrimary,
-            modifier = Modifier.weight(1f)
-        )
-        TextButton(onClick = onClear) {
-            Icon(Icons.Default.Delete, "Clear", tint = AppColors.Primary, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Clear", color = AppColors.Primary, fontWeight = FontWeight.Medium)
+private fun BleLogSection(
+    log: String,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Description, null, tint = AppColors.Primary, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(
+                "Raw BLE Log",
+                fontWeight = FontWeight.Bold,
+                fontSize = 19.sp,
+                color = AppColors.Primary,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = onClear) {
+                Icon(Icons.Default.Delete, "Clear", tint = AppColors.Primary, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Clear", color = AppColors.Primary, fontWeight = FontWeight.Medium)
+            }
         }
-    }
-    Spacer(Modifier.height(10.dp))
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(175.dp),
-        shape = RoundedCornerShape(14.dp),
-        color = AppColors.Surface,
-        border = BorderStroke(1.dp, AppColors.Border)
-    ) {
-        val scroll = rememberScrollState()
-        LaunchedEffect(log) { scroll.animateScrollTo(scroll.maxValue) }
-        Text(
-            text = colorizeLog(log.ifBlank { "Ready\n" }),
+        Spacer(Modifier.height(10.dp))
+        Surface(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scroll)
-                .padding(14.dp),
-            fontFamily = FontFamily.Monospace,
-            fontSize = 12.sp,
-            lineHeight = 18.sp
-        )
-    }
+                .fillMaxWidth()
+                .weight(1f)
+                .heightIn(min = 100.dp),
+            shape = RoundedCornerShape(14.dp),
+            color = AppColors.Surface,
+            border = BorderStroke(1.dp, AppColors.Border),
+            shadowElevation = 1.dp
+        ) {
+            val scroll = rememberScrollState()
+            LaunchedEffect(log) { scroll.animateScrollTo(scroll.maxValue) }
+            Text(
+                text = colorizeLog(log.ifBlank { "Ready\n" }),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scroll)
+                    .padding(14.dp),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 12.sp,
+                lineHeight = 18.sp
+            )
+        }
     }
 }
 
