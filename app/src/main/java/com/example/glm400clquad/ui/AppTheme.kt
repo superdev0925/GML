@@ -6,19 +6,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 object AppColors {
-    val Background = Color(0xFFF8F9FD)
+    val Background = Color(0xFFF5F6FA)
     val Surface = Color(0xFFFFFFFF)
+    val CardMuted = Color(0xFFF0F1F5)
     val Primary = Color(0xFF6236FF)
-    val PrimaryLight = Color(0xFFEEF0FF)
+    val PrimaryDark = Color(0xFF4B25D6)
+    val PrimaryLight = Color(0xFFE8E4FF)
+    val TitlePurple = Color(0xFF3D2E7A)
     val ConnectBlue = Color(0xFF007AFF)
-    val TextPrimary = Color(0xFF1A1D26)
-    val TextSecondary = Color(0xFF6B7280)
+    val TextPrimary = Color(0xFF1F2937)
+    val TextSecondary = Color(0xFF9CA3AF)
     val Border = Color(0xFFE5E7EB)
     val StatusRed = Color(0xFFE53935)
-    val StatusGreen = Color(0xFF2E7D32)
+    val StatusGreen = Color(0xFF43A047)
     val StatusOrange = Color(0xFFF57C00)
     val LogGreen = Color(0xFF2E7D32)
-    val LogMuted = Color(0xFF9CA3AF)
 }
 
 @Composable

@@ -1,16 +1,20 @@
 package com.example.glm400clquad
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,22 +25,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SignalCellularAlt
-import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -53,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -114,102 +120,117 @@ fun App(vm: MainViewModel) {
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp)
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
+                // Left column ~65%
                 Column(
                     modifier = Modifier
-                        .weight(0.62f)
+                        .weight(0.65f)
                         .fillMaxHeight()
                 ) {
-                    SectionHeader(
-                        title = "Live Measurements",
-                        icon = Icons.Default.Speed,
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
+                    SectionHeader("Live Measurements", Icons.Default.MonitorHeart)
+                    Spacer(Modifier.height(14.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 220.dp)
+                    ) {
                         Row(
-                            modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .heightIn(min = 100.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             LaserCard(panels[0], Modifier.weight(1f).fillMaxHeight())
                             LaserCard(panels[1], Modifier.weight(1f).fillMaxHeight())
                         }
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(14.dp))
                         Row(
-                            modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .heightIn(min = 100.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             LaserCard(panels[2], Modifier.weight(1f).fillMaxHeight())
                             LaserCard(panels[3], Modifier.weight(1f).fillMaxHeight())
                         }
                     }
-                    Spacer(Modifier.height(20.dp))
+
+                    Spacer(Modifier.height(22.dp))
                     BleLogSection(
                         log = displayLog,
                         onClear = { suppressedLog = log }
                     )
                 }
 
+                // Right column ~35%
                 Column(
                     modifier = Modifier
-                        .weight(0.38f)
-                        .fillMaxHeight()
+                        .weight(0.35f)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    SectionHeader(
-                        title = "Assign Device",
-                        icon = Icons.Default.Person,
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "Slot:",
-                            fontWeight = FontWeight.Medium,
-                            color = AppColors.TextPrimary,
-                            fontSize = 15.sp
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        (1..4).forEach { slot ->
-                            SlotChip(
-                                slot = slot,
-                                selected = selectedSlot == slot,
-                                onClick = { selectedSlot = slot }
+                    SidebarPanel {
+                        SectionHeader("Assign Device", Icons.Default.Person)
+                        Spacer(Modifier.height(16.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "Slot:",
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 15.sp,
+                                color = AppColors.TextPrimary
                             )
-                            Spacer(Modifier.width(8.dp))
-                        }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        "Showing GLM400 / GLM400CL only",
-                        fontSize = 12.sp,
-                        color = AppColors.TextSecondary
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    NearbyDevicesHeader(isScanning = isScanning)
-                    Spacer(Modifier.height(12.dp))
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        if (devices.isEmpty()) {
-                            item {
-                                Text(
-                                    "No GLM400 found yet. Tap Scan and move closer to the laser.",
-                                    fontSize = 13.sp,
-                                    color = AppColors.TextSecondary,
-                                    modifier = Modifier.padding(vertical = 8.dp)
+                            Spacer(Modifier.width(12.dp))
+                            (1..4).forEach { slot ->
+                                SlotChip(
+                                    slot = slot,
+                                    selected = selectedSlot == slot,
+                                    onClick = { selectedSlot = slot }
                                 )
+                                Spacer(Modifier.width(10.dp))
                             }
-                        } else {
-                            items(devices, key = { it.address }) { device ->
-                                DeviceCard(
-                                    device = device,
-                                    onConnect = {
-                                        isScanning = false
-                                        vm.stopScan()
-                                        vm.manager.connect(selectedSlot, device)
-                                    }
-                                )
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            "Showing GLM400 / GLM400CL only",
+                            fontSize = 12.sp,
+                            color = AppColors.TextSecondary
+                        )
+                    }
+
+                    Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        NearbyDevicesHeader(isScanning = isScanning)
+                        Spacer(Modifier.height(12.dp))
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (devices.isEmpty()) {
+                                item {
+                                    Text(
+                                        "No GLM400 found yet. Tap Scan and move closer to the laser.",
+                                        fontSize = 13.sp,
+                                        color = AppColors.TextSecondary,
+                                        lineHeight = 18.sp,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                            } else {
+                                items(devices, key = { it.address }) { device ->
+                                    DeviceCard(
+                                        device = device,
+                                        onConnect = {
+                                            isScanning = false
+                                            vm.stopScan()
+                                            vm.manager.connect(selectedSlot, device)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -221,106 +242,111 @@ fun App(vm: MainViewModel) {
 
 @Composable
 private fun AppHeader(onScan: () -> Unit, onStop: () -> Unit) {
-    Surface(
-        color = AppColors.Surface,
-        shadowElevation = 1.dp,
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    Surface(color = AppColors.Surface, shadowElevation = 2.dp) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
                     .background(AppColors.PrimaryLight),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = null,
-                    tint = AppColors.Primary,
-                    modifier = Modifier.size(20.dp)
-                )
+                Icon(Icons.Default.Star, null, tint = AppColors.Primary, modifier = Modifier.size(22.dp))
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(14.dp))
             Text(
                 "GLM400CL Quad Laser Monitor",
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                color = AppColors.TextPrimary,
+                fontSize = 22.sp,
+                color = AppColors.TitlePurple,
                 modifier = Modifier.weight(1f)
             )
-            Button(
-                onClick = onScan,
-                shape = RoundedCornerShape(24.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AppColors.Primary,
-                    contentColor = Color.White
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Brush.horizontalGradient(listOf(AppColors.Primary, AppColors.PrimaryDark)))
+                    .clickable(onClick = onScan)
+                    .padding(horizontal = 22.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Scan", fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Default.Search, null, tint = Color.White, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Scan", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             }
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(12.dp))
             OutlinedButton(
                 onClick = onStop,
-                shape = RoundedCornerShape(24.dp),
-                border = androidx.compose.foundation.BorderStroke(1.5.dp, AppColors.Primary),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = AppColors.Primary)
+                shape = RoundedCornerShape(28.dp),
+                border = BorderStroke(1.5.dp, AppColors.Primary),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = AppColors.Surface,
+                    contentColor = AppColors.Primary
+                )
             ) {
-                Icon(Icons.Default.Stop, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Stop", fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Default.Stop, null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Stop", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             }
         }
     }
 }
 
 @Composable
+private fun SidebarPanel(content: @Composable () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = AppColors.Surface,
+        shadowElevation = 1.dp,
+        border = BorderStroke(1.dp, AppColors.Border),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(18.dp)) { content() }
+    }
+}
+
+@Composable
 private fun SectionHeader(title: String, icon: ImageVector) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = AppColors.Primary,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            title,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            color = AppColors.TextPrimary
-        )
+        Icon(icon, null, tint = AppColors.Primary, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(10.dp))
+        Text(title, fontWeight = FontWeight.Bold, fontSize = 19.sp, color = AppColors.TextPrimary)
     }
 }
 
 @Composable
 private fun SlotChip(slot: Int, selected: Boolean, onClick: () -> Unit) {
-    val bg = if (selected) AppColors.Primary else AppColors.Surface
-    val fg = if (selected) Color.White else AppColors.TextPrimary
-    val borderColor = if (selected) AppColors.Primary else AppColors.Border
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(10.dp),
-        color = bg,
+    val shape = RoundedCornerShape(10.dp)
+    Box(
         modifier = Modifier
-            .size(44.dp)
-            .border(1.dp, borderColor, RoundedCornerShape(10.dp))
+            .size(if (selected) 50.dp else 46.dp)
+            .then(
+                if (selected) {
+                    Modifier.border(2.dp, AppColors.Primary.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                } else Modifier
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Text(
-                "$slot",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = fg
-            )
+        Surface(
+            onClick = onClick,
+            shape = shape,
+            color = if (selected) AppColors.Primary else AppColors.Surface,
+            modifier = Modifier
+                .size(44.dp)
+                .border(1.dp, if (selected) AppColors.Primary else AppColors.Border, shape)
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    "$slot",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    color = if (selected) Color.White else AppColors.TextPrimary
+                )
+            }
         }
     }
 }
@@ -336,30 +362,30 @@ private fun LaserCard(panel: LaserPanelState, modifier: Modifier = Modifier) {
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
-        color = AppColors.Surface,
-        shadowElevation = 2.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Border)
+        shape = RoundedCornerShape(16.dp),
+        color = AppColors.CardMuted,
+        shadowElevation = 0.dp,
+        border = BorderStroke(1.dp, AppColors.Border.copy(alpha = 0.6f))
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize()) {
             Icon(
                 Icons.Default.MyLocation,
                 contentDescription = null,
-                tint = AppColors.Primary.copy(alpha = 0.35f),
+                tint = AppColors.Primary.copy(alpha = 0.28f),
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(14.dp)
-                    .size(22.dp)
+                    .padding(16.dp)
+                    .size(24.dp)
             )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
+                    .padding(horizontal = 18.dp, vertical = 16.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(AppColors.Primary),
                         contentAlignment = Alignment.Center
@@ -368,7 +394,7 @@ private fun LaserCard(panel: LaserPanelState, modifier: Modifier = Modifier) {
                             "${panel.slot}",
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
+                            fontSize = 16.sp
                         )
                     }
                     Spacer(Modifier.width(12.dp))
@@ -376,43 +402,22 @@ private fun LaserCard(panel: LaserPanelState, modifier: Modifier = Modifier) {
                         Text(
                             "Device ${panel.slot}",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp,
+                            fontSize = 18.sp,
                             color = AppColors.TextPrimary
                         )
-                        Text(
-                            assignmentLabel,
-                            fontSize = 13.sp,
-                            color = AppColors.TextSecondary
-                        )
+                        Text(assignmentLabel, fontSize = 14.sp, color = AppColors.TextSecondary)
                     }
                 }
-                Spacer(Modifier.height(14.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(statusColor)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        statusLabel,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        color = statusColor,
-                        letterSpacing = 0.5.sp
-                    )
-                }
+
                 if (panel.connected || panel.connecting) {
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(12.dp))
                     Text(
                         panel.distanceText,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp,
+                        fontSize = 20.sp,
                         color = AppColors.TextPrimary
                     )
                     if (panel.rawHex != "--") {
-                        Spacer(Modifier.height(6.dp))
                         Text(
                             "Raw: ${panel.rawHex}",
                             fontFamily = FontFamily.Monospace,
@@ -420,13 +425,25 @@ private fun LaserCard(panel: LaserPanelState, modifier: Modifier = Modifier) {
                             color = AppColors.TextSecondary
                         )
                     }
-                    if (panel.lastUpdate != "--") {
-                        Text(
-                            "Last: ${panel.lastUpdate}",
-                            fontSize = 11.sp,
-                            color = AppColors.TextSecondary
-                        )
-                    }
+                }
+
+                Spacer(Modifier.weight(1f))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(9.dp)
+                            .clip(CircleShape)
+                            .background(statusColor)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        statusLabel,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = statusColor,
+                        letterSpacing = 0.8.sp
+                    )
                 }
             }
         }
@@ -435,87 +452,60 @@ private fun LaserCard(panel: LaserPanelState, modifier: Modifier = Modifier) {
 
 @Composable
 private fun BleLogSection(log: String, onClear: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            Icons.Default.Description,
-            contentDescription = null,
-            tint = AppColors.Primary,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(Modifier.width(8.dp))
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.Description, null, tint = AppColors.Primary, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(10.dp))
         Text(
             "Raw BLE Log",
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
+            fontSize = 19.sp,
             color = AppColors.TextPrimary,
             modifier = Modifier.weight(1f)
         )
         TextButton(onClick = onClear) {
-            Icon(
-                Icons.Default.Delete,
-                contentDescription = "Clear log",
-                tint = AppColors.Primary,
-                modifier = Modifier.size(18.dp)
-            )
+            Icon(Icons.Default.Delete, "Clear", tint = AppColors.Primary, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(4.dp))
             Text("Clear", color = AppColors.Primary, fontWeight = FontWeight.Medium)
         }
     }
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(10.dp))
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(168.dp),
-        shape = RoundedCornerShape(12.dp),
+            .height(175.dp),
+        shape = RoundedCornerShape(14.dp),
         color = AppColors.Surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Border)
+        border = BorderStroke(1.dp, AppColors.Border)
     ) {
         val scroll = rememberScrollState()
-        LaunchedEffect(log) {
-            scroll.animateScrollTo(scroll.maxValue)
-        }
+        LaunchedEffect(log) { scroll.animateScrollTo(scroll.maxValue) }
         Text(
             text = colorizeLog(log.ifBlank { "Ready\n" }),
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scroll)
-                .padding(12.dp),
+                .padding(14.dp),
             fontFamily = FontFamily.Monospace,
-            fontSize = 11.sp,
-            lineHeight = 16.sp
+            fontSize = 12.sp,
+            lineHeight = 18.sp
         )
     }
 }
 
 @Composable
 private fun NearbyDevicesHeader(isScanning: Boolean) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            Icons.Default.Bluetooth,
-            contentDescription = null,
-            tint = AppColors.Primary,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(Modifier.width(8.dp))
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.Bluetooth, null, tint = AppColors.Primary, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(10.dp))
         Text(
             "Nearby Bluetooth Devices",
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
+            fontSize = 19.sp,
             color = AppColors.TextPrimary,
             modifier = Modifier.weight(1f)
         )
         if (isScanning) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                strokeWidth = 2.dp,
-                color = AppColors.Primary
-            )
+            CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp, color = AppColors.Primary)
         }
     }
 }
@@ -523,80 +513,66 @@ private fun NearbyDevicesHeader(isScanning: Boolean) {
 @Composable
 private fun DeviceCard(device: ScannedBleDevice, onConnect: () -> Unit) {
     Surface(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         color = AppColors.Surface,
-        shadowElevation = 2.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.Border),
+        shadowElevation = 1.dp,
+        border = BorderStroke(1.dp, AppColors.Border),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.Bluetooth,
-                    contentDescription = null,
-                    tint = AppColors.ConnectBlue,
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        device.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = AppColors.TextPrimary
-                    )
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(AppColors.ConnectBlue),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Bluetooth, null, tint = Color.White, modifier = Modifier.size(22.dp))
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(device.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppColors.TextPrimary)
                     Text(
                         device.address,
                         fontFamily = FontFamily.Monospace,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = AppColors.TextSecondary
                     )
                 }
                 Button(
                     onClick = onConnect,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = AppColors.ConnectBlue,
                         contentColor = Color.White
                     ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
-                    contentPadding = ButtonDefaults.ContentPadding
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
                     Text("CONNECT", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(12.dp))
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 DeviceStat(Icons.Default.SignalCellularAlt, "${device.rssi} dBm")
-                DeviceStatDivider()
-                DeviceStat(Icons.Default.Speed, "— ms")
-                DeviceStatDivider()
-                DeviceStat(Icons.Default.Bluetooth, "Connectable")
+                StatDivider()
+                DeviceStat(Icons.Default.AccessTime, "— ms")
+                StatDivider()
+                DeviceStat(Icons.Default.MyLocation, "Unspecified")
+                StatDivider()
+                DeviceStat(Icons.Default.Bluetooth, "Connectible")
             }
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Default.FavoriteBorder,
-                    contentDescription = null,
-                    tint = AppColors.TextSecondary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(Modifier.width(6.dp))
-                Text("Not bonded", fontSize = 11.sp, color = AppColors.TextSecondary)
+            Spacer(Modifier.height(12.dp))
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.FavoriteBorder, null, tint = AppColors.TextSecondary, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Not bonded", fontSize = 12.sp, color = AppColors.TextSecondary)
                 Spacer(Modifier.weight(1f))
-                Icon(
-                    Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = AppColors.TextSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
+                Icon(Icons.Default.KeyboardArrowDown, null, tint = AppColors.TextSecondary, modifier = Modifier.size(22.dp))
             }
         }
     }
@@ -605,35 +581,47 @@ private fun DeviceCard(device: ScannedBleDevice, onConnect: () -> Unit) {
 @Composable
 private fun DeviceStat(icon: ImageVector, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = AppColors.TextSecondary, modifier = Modifier.size(14.dp))
-        Spacer(Modifier.width(4.dp))
+        Icon(icon, null, tint = AppColors.TextSecondary, modifier = Modifier.size(15.dp))
+        Spacer(Modifier.width(5.dp))
         Text(label, fontSize = 11.sp, color = AppColors.TextSecondary)
     }
 }
 
 @Composable
-private fun DeviceStatDivider() {
-    Box(
-        modifier = Modifier
-            .height(20.dp)
-            .width(1.dp)
-            .background(AppColors.Border)
-    )
+private fun StatDivider() {
+    Box(Modifier.height(22.dp).width(1.dp).background(AppColors.Border))
 }
 
 private fun colorizeLog(text: String) = buildAnnotatedString {
     text.lines().forEachIndexed { index, line ->
         if (index > 0) append('\n')
-        val style = when {
-            line.contains("Scan started", ignoreCase = true) ||
-                line.contains("Ready", ignoreCase = true) -> SpanStyle(color = AppColors.LogGreen)
-            line.contains("connected", ignoreCase = true) ||
-                line.contains("indications enabled", ignoreCase = true) -> SpanStyle(color = AppColors.ConnectBlue)
-            line.contains("error", ignoreCase = true) ||
-                line.contains("failed", ignoreCase = true) -> SpanStyle(color = AppColors.StatusRed)
-            line.contains("<=") -> SpanStyle(color = AppColors.Primary)
-            else -> SpanStyle(color = AppColors.TextPrimary)
+        if (line.isBlank()) {
+            withStyle(SpanStyle(color = AppColors.TextPrimary)) { append(line) }
+            return@forEachIndexed
         }
-        withStyle(style) { append(line) }
+        val bracketEnd = line.indexOf(']')
+        if (line.startsWith('[') && bracketEnd > 0) {
+            withStyle(SpanStyle(color = AppColors.TextPrimary)) { append(line.substring(0, bracketEnd + 1)) }
+            val rest = line.substring(bracketEnd + 1).trimStart()
+            val restStyle = when {
+                rest.contains("Scan started", ignoreCase = true) -> SpanStyle(color = AppColors.LogGreen)
+                rest.contains("Ready", ignoreCase = true) -> SpanStyle(color = AppColors.LogGreen)
+                rest.contains("connected", ignoreCase = true) -> SpanStyle(color = AppColors.ConnectBlue)
+                rest.contains("error", ignoreCase = true) || rest.contains("failed", ignoreCase = true) ->
+                    SpanStyle(color = AppColors.StatusRed)
+                else -> SpanStyle(color = AppColors.TextPrimary)
+            }
+            if (rest.isNotEmpty()) {
+                withStyle(SpanStyle(color = AppColors.TextPrimary)) { append(" ") }
+                withStyle(restStyle) { append(rest) }
+            }
+        } else {
+            val style = when {
+                line.equals("Ready", ignoreCase = true) -> SpanStyle(color = AppColors.LogGreen)
+                line.contains("Scan started", ignoreCase = true) -> SpanStyle(color = AppColors.LogGreen)
+                else -> SpanStyle(color = AppColors.TextPrimary)
+            }
+            withStyle(style) { append(line) }
+        }
     }
 }
