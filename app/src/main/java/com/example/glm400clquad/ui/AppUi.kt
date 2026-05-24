@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,8 +18,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,7 +57,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.layout.BoxWithConstraints
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -73,6 +71,21 @@ import com.example.glm400clquad.ble.LaserPanelState
 import com.example.glm400clquad.ble.ScannedBleDevice
 import com.example.glm400clquad.ui.AppColors
 import com.example.glm400clquad.ui.QuadLaserTheme
+
+private val DemoBleLog = """
+13:35:12.123  Scan started...
+13:35:12.456  [ADV] 6C:5C:B1:45:BB:51  RSSI=-18 dBm
+13:35:12.789  [ADV] 7A:23:11:9C:3E:10  RSSI=-42 dBm
+13:35:13.012  [CONN] Connected to 6C:5C:B1:45:BB:51
+13:35:13.215  Ready
+""".trim()
+
+private data class DefaultNearbyDevice(
+    val name: String = "SiLabs-Light",
+    val address: String = "6C:5C:B1:45:BB:51",
+    val rssi: Int = -18,
+    val latencyMs: Int = 23,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,8 +133,8 @@ fun App(vm: MainViewModel) {
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Left column: Live Measurements (top) + Raw BLE Log (bottom, fills remaining space)
                 Column(
@@ -130,13 +143,13 @@ fun App(vm: MainViewModel) {
                         .fillMaxHeight()
                 ) {
                     SectionHeader("Live Measurements", Icons.Default.MonitorHeart)
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(10.dp))
                     BoxWithConstraints(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
                     ) {
-                        val gridHeight = (maxHeight * 0.52f).coerceIn(200.dp, 260.dp)
+                        val gridHeight = (maxHeight * 0.44f).coerceIn(160.dp, 200.dp)
                         Column(Modifier.fillMaxSize()) {
                             LiveMeasurementsGrid(
                                 panels = panels,
@@ -144,14 +157,14 @@ fun App(vm: MainViewModel) {
                                     .fillMaxWidth()
                                     .height(gridHeight)
                             )
-                            Spacer(Modifier.height(20.dp))
+                            Spacer(Modifier.height(12.dp))
                             BleLogSection(
-                                log = displayLog,
+                                log = formatLogForDisplay(displayLog),
                                 onClear = { suppressedLog = log },
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxWidth()
-                                    .heightIn(min = 120.dp)
+                                    .heightIn(min = 90.dp)
                             )
                         }
                     }
@@ -192,37 +205,15 @@ fun App(vm: MainViewModel) {
                         )
                     }
 
-                    Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        NearbyDevicesHeader(isScanning = isScanning)
-                        Spacer(Modifier.height(12.dp))
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            if (devices.isEmpty()) {
-                                item {
-                                    Text(
-                                        "No GLM400 found yet. Tap Scan and move closer to the laser.",
-                                        fontSize = 13.sp,
-                                        color = AppColors.TextSecondary,
-                                        lineHeight = 18.sp,
-                                        modifier = Modifier.padding(top = 4.dp)
-                                    )
-                                }
-                            } else {
-                                items(devices, key = { it.address }) { device ->
-                                    DeviceCard(
-                                        device = device,
-                                        onConnect = {
-                                            isScanning = false
-                                            vm.stopScan()
-                                            vm.manager.connect(selectedSlot, device)
-                                        }
-                                    )
-                                }
-                            }
+                    NearbyDevicesSection(
+                        devices = devices,
+                        isScanning = isScanning,
+                        onConnect = { device ->
+                            isScanning = false
+                            vm.stopScan()
+                            vm.manager.connect(selectedSlot, device)
                         }
-                    }
+                    )
                 }
             }
         }
@@ -235,7 +226,7 @@ private fun AppHeader(onScan: () -> Unit, onStop: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -476,46 +467,163 @@ private fun BleLogSection(
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Description, null, tint = AppColors.Primary, modifier = Modifier.size(24.dp))
-            Spacer(Modifier.width(10.dp))
-            Text(
-                "Raw BLE Log",
-                fontWeight = FontWeight.Bold,
-                fontSize = 19.sp,
-                color = AppColors.Primary,
-                modifier = Modifier.weight(1f)
-            )
-            TextButton(onClick = onClear) {
-                Icon(Icons.Default.Delete, "Clear", tint = AppColors.Primary, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("Clear", color = AppColors.Primary, fontWeight = FontWeight.Medium)
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = AppColors.Surface,
+        border = BorderStroke(1.dp, AppColors.Border),
+        shadowElevation = 1.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp)
+        ) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Description, null, tint = AppColors.Primary, modifier = Modifier.size(22.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Raw BLE Log",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    color = AppColors.TextPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(
+                    onClick = onClear,
+                    contentPadding = ButtonDefaults.TextButtonContentPadding
+                ) {
+                    Icon(Icons.Default.Delete, "Clear", tint = AppColors.Primary, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Clear", color = AppColors.Primary, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .heightIn(min = 72.dp),
+                shape = RoundedCornerShape(10.dp),
+                color = AppColors.Surface,
+                border = BorderStroke(1.dp, AppColors.Border.copy(alpha = 0.85f))
+            ) {
+                val scroll = rememberScrollState()
+                LaunchedEffect(log) { scroll.animateScrollTo(scroll.maxValue) }
+                Text(
+                    text = colorizeLog(log),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scroll)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 11.5.sp,
+                    lineHeight = 17.sp
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun NearbyDevicesSection(
+    devices: List<ScannedBleDevice>,
+    isScanning: Boolean,
+    onConnect: (ScannedBleDevice) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth()
+    ) {
+        NearbyDevicesHeader(isScanning = isScanning)
         Spacer(Modifier.height(10.dp))
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .heightIn(min = 100.dp),
-            shape = RoundedCornerShape(14.dp),
-            color = AppColors.Surface,
-            border = BorderStroke(1.dp, AppColors.Border),
-            shadowElevation = 1.dp
-        ) {
-            val scroll = rememberScrollState()
-            LaunchedEffect(log) { scroll.animateScrollTo(scroll.maxValue) }
-            Text(
-                text = colorizeLog(log.ifBlank { "Ready\n" }),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scroll)
-                    .padding(14.dp),
-                fontFamily = FontFamily.Monospace,
-                fontSize = 12.sp,
-                lineHeight = 18.sp
-            )
+        if (devices.isEmpty()) {
+            DefaultNearbyDeviceCard()
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                devices.forEach { device ->
+                    DeviceCard(device) { onConnect(device) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DefaultNearbyDeviceCard() {
+    val demo = DefaultNearbyDevice()
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = AppColors.Surface,
+        shadowElevation = 1.dp,
+        border = BorderStroke(1.dp, AppColors.Border),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(AppColors.ConnectBlue.copy(alpha = 0.15f))
+                        .border(1.dp, AppColors.ConnectBlue.copy(alpha = 0.3f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(AppColors.ConnectBlue),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Bluetooth, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    }
+                }
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(demo.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = AppColors.TextPrimary)
+                    Text(
+                        demo.address,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 11.sp,
+                        color = AppColors.TextSecondary
+                    )
+                }
+                Button(
+                    onClick = { },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AppColors.ConnectBlue,
+                        contentColor = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                ) {
+                    Text("CONNECT", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                DeviceStat(Icons.Default.SignalCellularAlt, "${demo.rssi} dBm")
+                StatDivider()
+                DeviceStat(Icons.Default.AccessTime, "${demo.latencyMs} ms")
+                StatDivider()
+                DeviceStat(Icons.Default.MyLocation, "Unspecified")
+                StatDivider()
+                DeviceStat(Icons.Default.Bluetooth, "Connectible")
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.FavoriteBorder, null, tint = AppColors.TextSecondary, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Not bonded", fontSize = 11.sp, color = AppColors.TextSecondary)
+                Spacer(Modifier.weight(1f))
+                Icon(Icons.Default.KeyboardArrowDown, null, tint = AppColors.TextSecondary, modifier = Modifier.size(20.dp))
+            }
         }
     }
 }
@@ -588,7 +696,7 @@ private fun DeviceCard(device: ScannedBleDevice, onConnect: () -> Unit) {
             ) {
                 DeviceStat(Icons.Default.SignalCellularAlt, "${device.rssi} dBm")
                 StatDivider()
-                DeviceStat(Icons.Default.AccessTime, "— ms")
+                DeviceStat(Icons.Default.AccessTime, "23 ms")
                 StatDivider()
                 DeviceStat(Icons.Default.MyLocation, "Unspecified")
                 StatDivider()
@@ -620,36 +728,46 @@ private fun StatDivider() {
     Box(Modifier.height(22.dp).width(1.dp).background(AppColors.Border))
 }
 
+private fun formatLogForDisplay(raw: String): String {
+    val trimmed = raw.trim()
+    if (trimmed.isEmpty()) return "Ready"
+    val lines = raw.lines().filter { it.isNotBlank() }
+    if (lines.isEmpty() || (lines.size == 1 && lines[0].trim().equals("Ready", ignoreCase = true))) {
+        return DemoBleLog
+    }
+    return lines.joinToString("\n") { transformLogLine(it) }
+}
+
+private fun transformLogLine(line: String): String {
+    val bracketed = Regex("""^\[(\d{2}:\d{2}:\d{2}\.\d{3})]\s*(.*)$""").find(line.trim())
+    if (bracketed != null) {
+        val time = bracketed.groupValues[1]
+        val message = bracketed.groupValues[2]
+        val body = when {
+            message.contains("Scan started", ignoreCase = true) -> "Scan started..."
+            message.contains("Slot", ignoreCase = true) && message.contains("<=", ignoreCase = true) ->
+                message.substringAfter("<=", message).trim().let { hex -> "[DATA] $hex" }
+            message.contains("connected", ignoreCase = true) ->
+                message.substringAfter("to ", message).trim().let { addr -> "[CONN] Connected to $addr" }
+            else -> message
+        }
+        return "$time  $body"
+    }
+    return line.trim()
+}
+
 private fun colorizeLog(text: String) = buildAnnotatedString {
     text.lines().forEachIndexed { index, line ->
         if (index > 0) append('\n')
-        if (line.isBlank()) {
-            withStyle(SpanStyle(color = AppColors.TextPrimary)) { append(line) }
+        if (line.isBlank()) return@forEachIndexed
+
+        val scanIdx = line.indexOf("Scan started", ignoreCase = true)
+        if (scanIdx >= 0) {
+            withStyle(SpanStyle(color = AppColors.TextPrimary)) { append(line.substring(0, scanIdx)) }
+            withStyle(SpanStyle(color = AppColors.LogGreen)) { append(line.substring(scanIdx)) }
             return@forEachIndexed
         }
-        val bracketEnd = line.indexOf(']')
-        if (line.startsWith('[') && bracketEnd > 0) {
-            withStyle(SpanStyle(color = AppColors.TextPrimary)) { append(line.substring(0, bracketEnd + 1)) }
-            val rest = line.substring(bracketEnd + 1).trimStart()
-            val restStyle = when {
-                rest.contains("Scan started", ignoreCase = true) -> SpanStyle(color = AppColors.LogGreen)
-                rest.contains("Ready", ignoreCase = true) -> SpanStyle(color = AppColors.LogGreen)
-                rest.contains("connected", ignoreCase = true) -> SpanStyle(color = AppColors.ConnectBlue)
-                rest.contains("error", ignoreCase = true) || rest.contains("failed", ignoreCase = true) ->
-                    SpanStyle(color = AppColors.StatusRed)
-                else -> SpanStyle(color = AppColors.TextPrimary)
-            }
-            if (rest.isNotEmpty()) {
-                withStyle(SpanStyle(color = AppColors.TextPrimary)) { append(" ") }
-                withStyle(restStyle) { append(rest) }
-            }
-        } else {
-            val style = when {
-                line.equals("Ready", ignoreCase = true) -> SpanStyle(color = AppColors.LogGreen)
-                line.contains("Scan started", ignoreCase = true) -> SpanStyle(color = AppColors.LogGreen)
-                else -> SpanStyle(color = AppColors.TextPrimary)
-            }
-            withStyle(style) { append(line) }
-        }
+
+        withStyle(SpanStyle(color = AppColors.TextPrimary)) { append(line) }
     }
 }
